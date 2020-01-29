@@ -1,2 +1,1 @@
-# gendernaut
-Gendernaut. Queering the software
+gendernaut

@@ -1,0 +1,69 @@
+.gendernaut-grid-item {
+	display: inline-block;
+	margin: 0 10px 10px 0;
+	width: 220px;
+
+	&__thumb {
+		margin-bottom: 10px;
+		background-color: #555;
+
+		img {
+			display: block;
+			width: 100%;
+			margin: 0;
+		}
+	}
+
+	&__title {
+		margin: 0;
+		font-size: 12px;
+		font-weight: 500;
+		padding: 6px 0;
+		line-height: 16px;
+		text-transform: uppercase;
+		letter-spacing: 0.3em;
+		text-align: center;
+		color: #808080;
+	}
+}
+
+.gendernaut-filters {
+	padding-left: 2rem;
+	display: flex;
+}
+
+.gendernaut-filter-group {
+
+	// display: inline-block;
+	text-align: left;
+	margin-right: 2rem;
+	position: relative;
+
+	& &__header {
+		display: flex;
+	}
+
+	& &__title {
+		font-size: 1.3rem;
+		text-decoration: underline;
+		margin: 0;
+	}
+	& &__clear {
+		margin-left: 6px;
+		width: 2rem !important;
+		text-align: center;
+		letter-spacing: 0;
+
+		&:disabled {
+			display: none !important;
+		}
+	}
+	& &__terms {
+		list-style: none;
+		list-style-type: none;
+		margin: 0;
+	}
+	& &__term {
+		margin: 0;
+	}
+}
