@@ -154,19 +154,19 @@ class Gendernaut_Admin {
 	public function add_post_type_settings() {
 		$post_types = $this->post_type_labels();
 
-		$this->sections[] = array(
-			'id'    => 'gendernaut_shortcode',
-			'title' => __( 'Shortcode Defaults', $this->textdomain ),
-		);
-
-		$this->settings['gendernaut_shortcode'] = array(
-			'default_post_type' => array(
-				'name'  => 'default_post_type',
-				'label' => __( 'Default Archive Post Type', $this->textdomain ),
-				'type'  => 'select',
-				'options' => $post_types,
-			),
-		);
+		// $this->sections[] = array(
+		// 	'id'    => 'gendernaut_shortcode',
+		// 	'title' => __( 'Shortcode Defaults', $this->textdomain ),
+		// );
+		//
+		// $this->settings['gendernaut_shortcode'] = array(
+		// 	'default_post_type' => array(
+		// 		'name'  => 'default_post_type',
+		// 		'label' => __( 'Default Archive Post Type', $this->textdomain ),
+		// 		'type'  => 'select',
+		// 		'options' => $post_types,
+		// 	),
+		// );
 
 		$views = gendernaut()->get_registered_views();
 		$views = array_combine($views, $views);
