@@ -103,12 +103,75 @@ class Gendernaut_Renderer {
 	}
 
 	/**
-	 * Render the archive.
+	 * Render the menu.
 	 *
 	 * @since    1.0.0
 	 */
-	public function archive() {
-		$this->do_section( 'archive' );
+	public function menu() {
+		$this->do_section( 'menu' );
+	}
+
+    /**
+     * Render the archive.
+     *
+     * @since    1.0.0
+     */
+    public function archive() {
+        $this->do_section( 'archive' );
+    }
+
+	/**
+     * Render the archive.
+     *
+     * @since    1.0.0
+     */
+    public function collections() {
+        $this->do_section( 'collections' );
+    }
+
+    /**
+     * Render the collections overlay.
+     *
+     * @since    1.0.0
+     */
+    public function collections_overlay() {
+        $this->do_section( 'collections-overlay' );
+    }
+
+    /**
+     * Render the collections menu.
+     *
+     * @since    1.0.0
+     */
+    public function collections_menu() {
+        $this->do_section( 'collections-menu' );
+    }
+
+	/**
+	 * Render a view selector.
+	 *
+	 * @since    1.0.0
+	 */
+	public function view_selector( $views ) {
+		$class = $this->build_class('view-selector');
+		$item_class = $this->build_class('view-selector', 'item');
+		$a_class = $this->build_class('view-selector', 'item-link') . ' ' . $this->build_js_class('view-select');
+
+		if ( count($views) > 1 ) : ?>
+			<ul class="<?php echo $class; ?>">
+				<?php foreach ($views as $view) :
+
+					$icon = $this->get_icon( $view, $this->build_classes('view-selector', 'item-icon', $view) );
+
+					?>
+					<li class="<?php echo $item_class; ?>">
+						<a class="<?php echo $a_class; ?>" data-view="<?php echo $view; ?>" href="#<?php echo $view; ?>">
+							<?php echo $icon; ?>
+						</a>
+					</li>
+				<?php endforeach; ?>
+			</ul>
+		<?php endif;
 	}
 
 	/**
@@ -126,7 +189,7 @@ class Gendernaut_Renderer {
 	/**
 	 * Render a view.
 	 *
-	 * Render a view. Only the 'grid' view exists right now but additional ones will be added in the future.
+	 * Render a view.
 	 *
 	 * @since    1.0.0
 	 * @param    string    $view    View name.
@@ -135,7 +198,9 @@ class Gendernaut_Renderer {
 		if ( $view ) {
 			$prev_view = $this->current_view;
 			$this->current_view = $view;
-			$this->do_section( "view-{$view}", 'section');
+			$class = $this->build_class('view');
+			$class .= ' js-' . $class;
+			$this->do_section( "view-{$view}", 'section', array( 'class' => $class, 'data-type' => $view ));
 			$this->current_view = $prev_view;
 		}
 	}
@@ -155,6 +220,37 @@ class Gendernaut_Renderer {
 	}
 
 	/**
+	 * Render the class attribute for a section.
+	 *
+	 * @since    1.0.0
+	 * @param    string|string[]    $additional    Additional classes to add to the attribute.
+	 * @param    array              $mods          Modifiers to append to main item class.
+	 */
+	public function section_class( $additional = '', $mods = array() ) {
+		$class = esc_attr( self::render_class( $this->get_section_classes( $additional, $mods ) ) );
+		echo "class='{$class}' ";
+	}
+
+	/**
+	 * Get a list of html classes for a section.
+	 *
+	 * @since     1.0.0
+	 * @param     string|string[]    $additional    Additional classes to add to the attribute.
+	 * @param     array              $mods          Modifiers to append to main item class.
+	 * @return    string[]                          List of html classes.
+	 */
+	public function get_section_classes( $additional = array(), $mods = array() ) {
+		$section_name = $this->current_section;
+		$classes = $this->build_section_classes( $section_name, $mods );
+
+		$additional = $this->split_classes( $additional );
+
+		$classes = array_merge( $additional, $classes );
+
+		return $this->filter_classes( $section_name, $classes );
+	}
+
+	/**
 	 * Render the class attribute for an item.
 	 *
 	 * @since    1.0.0
@@ -163,7 +259,18 @@ class Gendernaut_Renderer {
 	 * @param    int|null           $post_id       ID of the post the item is related to. Current `$post` by default.
 	 */
 	public function item_class( $additional = '', $mods = array(), $post_id = null ) {
-		$class = esc_attr( self::render_class( $this->get_item_class( $additional, $mods, $post_id ) ) );
+		$tax_terms = $this->get_object_taxonomy_terms( $post_id );
+
+		// TODO: fer-ho millor
+		foreach ($tax_terms as $taxonomy => $ids) {
+			if ( $ids ) {
+				foreach ( $ids as $id ) {
+					$additional .= " " . $this->build_class( $this->current_section ) . "-" . $taxonomy . "-" . $id;
+			    }
+			}
+		}
+
+		$class = esc_attr( self::render_class( $this->get_item_classes( $additional, $mods, $post_id ) ) );
 		echo "class='{$class}' ";
 	}
 
@@ -176,26 +283,19 @@ class Gendernaut_Renderer {
 	 * @param     int|null           $post_id       ID of the post the item is related to. Current `$post` by default.
 	 * @return    string[]                          List of html classes.
 	 */
-	public function get_item_class( $additional = '', $mods = array(), $post_id = null ) {
+	public function get_item_classes( $additional = '', $mods = array(), $post_id = null ) {
 		$post_id || $post_id = get_the_ID();
 
 		$classes = $this->build_classes( $this->current_section, null, $mods );
-		$classes[] = 'js-' . $this->build_class( $this->current_section );
+		$classes[] = $this->build_js_class( $this->current_section );
 
-		if ( $additional ) {
-			if ( ! is_array( $additional ) ) {
-				$additional = preg_split( '#\s+#', $additional );
-			}
-		}
-		else {
-			$additional = array();
-		}
+		$additional = $this->split_classes( $additional );
 
 		$classes = array_merge( $additional, $classes );
 
 		$classes = get_post_class( $classes, $post_id );
 
-		return apply_filters( "{$this->namespace}_item_class", $classes );
+		return $this->filter_classes( 'item', $classes );
 	}
 
 	/**
@@ -255,7 +355,7 @@ class Gendernaut_Renderer {
 			?>
 			<form class="<?php echo $class; ?>">
 				<?php echo $content; ?>
-				<input class="<?php echo $submit_class; ?>" type="submit" value="<?php _e('Filter', $this->namespace); ?>"/>
+				<input class="<?php echo $submit_class; ?>" type="submit" value="<?php _e('Filtrar', $this->namespace); ?>"/>
 			</form>
 			<?php
 		}
@@ -274,25 +374,88 @@ class Gendernaut_Renderer {
 	 * @return    string    The rendered filter group.
 	 */
 	public function get_filter_group( $options ) {
-		$content = $this->get_filter_group_content( $options );
 
-		if ( $content ) {
+		$method = "get_filter_group_{$options['type']}";
 
-			$atts = $this->get_filter_group_atts( $options );
-			$atts = self::render_atts( $atts );
+		if ( method_exists( $this, $method ) ) {
+			return $this->$method( $options );
+		}
+		else {
+			$content = $this->get_filter_group_content( $options );
 
-			$content_class  = $this->build_class( 'filter-group', 'content' );
+			if ( $content ) {
 
-			return "
-			<fieldset {$atts}>
-				{$this->get_filter_group_header( $options )}
-				<div class='{$content_class}'>
-					{$content}
-				</div>
-			</fieldset>";
+				$atts = $this->get_filter_group_atts( $options );
+				$atts = self::render_atts( $atts );
+
+				$content_class  = $this->build_classes_and_render( array('filter-group', 'dropdown'), 'content' );
+
+				return "
+				<fieldset {$atts}>
+					{$this->get_filter_group_header( $options )}
+					<div class='{$content_class}'>
+						{$content}
+					</div>
+				</fieldset>";
+			}
 		}
 
 		return '';
+	}
+
+	// TODO: Comentar
+	public function get_filter_group_index( $options ) {
+		$choices = array_merge( array( '0-9' ), range( 'A', 'Z' ) );
+		$atts = $this->get_filter_group_atts( $options );
+		$atts = self::render_atts( $atts );
+
+		$list_class = $this->build_class('filter-index', 'list');
+		$list_item_class = $this->build_class('filter-index', 'list-item');
+		$radio_class = $this->build_class('filter-index', 'option') . ' ' . $this->build_js_class('index-option');
+		$label_class = $this->build_class('filter-index', 'option-label');
+		$radio_name = $this->build_class('index-') . uniqid();
+
+		$content = "<div {$atts}><ul class='{$list_class}'>";
+		foreach ($choices as $choice) {
+			$id = "{$radio_name}-{$choice}";
+			$content .= "
+			<li class='{$list_item_class}'>
+				<input type='radio' name='{$radio_name}' id='{$id}' class='{$radio_class}' value='[{$choice}]'>
+				<label for='{$id}' class='{$label_class}'>{$choice}</label>
+			</li>";
+		}
+		$id = "{$radio_name}-all";
+		$radio_class = $radio_class . ' ' . $this->build_class('filter-index', 'option', 'all') . ' ' . $this->build_js_class( 'filter-clear' );
+		$label_class = $label_class . ' ' . $this->build_class('filter-index', 'option-label', 'all') . ' ' . $this->build_class('filter-clear');
+		$clear_icon = $this->get_icon('cross');
+		$content .= "
+			<li class='{$list_item_class}'>
+				<input type='radio' name='{$radio_name}' id='{$id}' class='{$radio_class}' value='' disabled >
+				<label for='{$id}' class='{$label_class}'>{$clear_icon}</label>
+			</li>
+		</ul></div>";
+		return $content;
+	}
+
+	// TODO: Comentar
+	public function get_filter_group_search( $options ) {
+		$atts = $this->get_filter_group_atts( $options );
+		$atts = self::render_atts( $atts );
+
+		$field_class = $this->build_class('filter-search', 'field');
+		$input_class = $this->build_class('filter-search', 'input') . ' ' . $this->build_js_class('search-input');
+		$placeholder = __('Cerca', $this->namespace );
+		$search_icon = $this->get_icon( 'search', $this->build_class('filter-search', 'icon') );
+		$clear_icon = $this->get_icon( 'cross' );
+		$clear_class = $this->build_class('filter-search', 'clear') . ' ' . $this->build_class('filter-clear') . ' ' . $this->build_js_class( 'filter-clear' );
+		return "
+		<div {$atts}>
+			<div class='{$field_class}'>
+				<input type='search' class='{$input_class}' name='s' placeholder='{$placeholder}'/>
+				{$search_icon}
+			</div>
+			<button class='{$clear_class}' disabled >{$clear_icon}</button>
+		</div>";
 	}
 
 	/**
@@ -305,15 +468,20 @@ class Gendernaut_Renderer {
 	 * @return    string               Header for a filter group.
 	 */
 	public function get_filter_group_header( $options ) {
-		$header_class = $this->build_class( 'filter-group', 'header' );
+		$header_class = $this->build_classes_and_render( array('filter-group', 'dropdown'), 'header' );
 		$title_class  = $this->build_class( 'filter-group', 'title' );
-		$clear_class  = $this->build_class( 'filter-group', 'clear' );
-		$clear_class  .= ' js-' . $this->build_class( 'filter-clear' );
+		$clear_class  = $this->build_class( 'filter-group', 'clear' )
+		        . ' ' . $this->build_class( 'filter-clear' )
+		        . ' ' . $this->build_js_class( 'filter-clear' );
+		$clear_icon = $this->get_icon( 'cross' );
+		$show_class  = $this->build_classes_and_render( array('filter-group', 'dropdown'), 'show' );
+		$show_js_class =
+		$show_class  .= ' ' . $this->build_js_class( 'dropdown-show' );
 		$title = esc_html( $options['label'] );
 		return "
 		<header class='$header_class'>
-			<h4 class='$title_class'>{$title}</h4>
-			<input type='button' class='$clear_class' value='X' />
+			<button class='$show_class'><span class='$title_class'>{$title}</span></button>
+			<button class='$clear_class' disabled >{$clear_icon}</button>
 		</header>";
 	}
 
@@ -356,7 +524,9 @@ class Gendernaut_Renderer {
 		$method = "get_filter_group_atts_{$type}";
 
 		$classes = $this->build_classes( 'filter-group', '', $type );
-		$classes[] = 'js-' . $this->build_class( 'filter-group' );
+		$classes[] = $this->build_class( "filter-{$type}" );
+		$classes[] = $this->build_js_class( 'filter-group' );
+		$classes[] = $this->build_js_class( "filter-{$type}"  );
 		$classes = $this->filter_classes( 'filter_group', $classes );
 
 		if ( method_exists( $this, $method ) ) {
@@ -392,18 +562,18 @@ class Gendernaut_Renderer {
 			$item_class = $this->build_classes_and_render( 'filter-group', 'term', $options['taxonomy'] );
 			$input_class = 'js-' . $this->build_class( 'term-input' );
 
-			// TODO: Check accessibility. Listbox?
-
 			$content .= "<ul class='{$container_class}'>";
 
 			$name = $this->build_class("filters[taxonomy][{$options['taxonomy']}][]");
+			$icon = $this->get_icon('checkmark');
 
 			foreach ( $terms as $term ) {
 				$id = $this->build_class("filter-term-{$term->term_taxonomy_id}");
+				$color_class = $this->term_color_class($term->term_id);
 				$content .= "
-				<li class='{$item_class}'>
+				<li class='{$item_class} {$color_class}'>
 					<input type='checkbox' id='{$id}' name='{$name}' value='{$term->term_id}' class='{$input_class}'>
-					<label for='{$id}'>{$term->name}</label>
+					<label for='{$id}'>{$icon}{$term->name}</label>
 				</li>";
 			}
 			$content .= "</ul>";
@@ -425,7 +595,7 @@ class Gendernaut_Renderer {
 			'mode'    => 'SOME',
 			'compare' => '=',
 		);
-		return array( 'data-filter' => $filter );
+		return array( 'data-filter' => $filter, 'class' => $this->build_class('dropdown') . ' ' . $this->build_js_class('dropdown-group') );
 	}
 
 	/**
@@ -446,9 +616,13 @@ class Gendernaut_Renderer {
 	 * @return    array                   HTML attribute key value pairs.
 	 */
 	public function get_item_atts( $post_id = null ) {
+		$post = get_post( $post_id );
 		$tax_terms = $this->get_object_taxonomy_terms( $post_id );
 
-		$atts = array();
+		$atts = array(
+			'data-index-name' => $post->post_title,
+			'data-gendernaut_id' => $post->ID,
+		);
 
 		foreach ($tax_terms as $taxonomy => $ids) {
 			if ( $ids ) $atts["data-{$taxonomy}"] = $ids;
@@ -487,6 +661,82 @@ class Gendernaut_Renderer {
 	}
 
 	/**
+	 * Render HTML attributes for an item.
+	 *
+	 * @since     1.0.0
+	 * @param     int|null    $post_id    ID of the Post the item corresponds to. Current Post if false.
+     * @return    string      HTML content
+	 */
+	public function item_meta( $post_id = null ) {
+		return $this->render_meta( $this->get_item_meta( $post_id ) );
+	}
+
+	/**
+	 * Get a list of meta attributes for an item.
+	 *
+	 * @since     1.0.0
+	 * @param     int|null    $post_id    ID of the Post the item corresponds to. Current Post if false.
+	 * @return    array                   HTML attribute key value pairs.
+	 */
+	public function get_item_meta( $post_id = null ) {
+		static $ignores = ['_', '*'];
+	    $metas = [];
+
+		$meta_fields = get_post_custom( $post_id );
+		foreach ( $meta_fields as $key => $value ) {
+			if ( in_array( mb_substr($key, 0, 1), $ignores ) )
+				continue;
+
+			$metas[$key] = $value;
+		}
+
+		return $metas;
+	}
+
+	/**
+	 * Render meta array as html content.
+	 *
+	 * @since     1.0.0
+	 * @param     array     $metas    Array in the form 'name' => 'value'.
+	 * @return    string             html content.
+	 */
+	public static function render_meta( $metas ) {
+		$result = '<div>';
+		foreach ($metas as $key => $value) {
+			$key = sanitize_text_field($key);
+
+			$key = str_replace("_", " ", $key);
+			$key = ucfirst($key);
+
+			$result .= "<b>{$key}</b>: " . sanitize_text_field($value);
+			if ( is_array( $value ) ) {
+				foreach ( $value as $k => $v ) {
+					$result .= sanitize_text_field($v) . " ";
+				}
+			}
+			$result .= "<br />";
+		}
+		$result .= '</div>';
+		return $result;
+	}
+
+	// TODO: Comentar.
+	function get_icon( $icon_name, $classes = null ) {
+		$icon_class = self::render_class( array_merge( (array) $classes, $this->build_classes('icon', null, $icon_name) ) );
+		$icon_content = $this->get_icon_content( $icon_name );
+
+		return "<span class='{$icon_class}'>{$icon_content}</span>";
+	}
+
+	function get_icon_content( $icon_name ) {
+		$plugin_path = gendernaut()->plugin_path();
+		$icon_path = "{$plugin_path}public/icons/{$icon_name}-icon.svg";
+		$icon_path = apply_filters( "{$this->namespace}_icon_path", $icon_path, $icon_name );
+
+		return file_exists($icon_path) ? file_get_contents($icon_path) : '';
+	}
+
+	/**
 	 * Construct a namespaced html class name.
 	 *
 	 * Constructs an html class, prepending the namespace and appending optional subclass and modifier.
@@ -508,6 +758,11 @@ class Gendernaut_Renderer {
 			$class .= "--$modifier";
 		}
 		return $class;
+	}
+
+	// TODO: comentar.
+	public function build_js_class( $base_class, $subclass = '', $modifier = '' ) {
+		return 'js-' . $this->build_class( $base_class, $subclass, $modifier );
 	}
 
 	/**
@@ -550,6 +805,13 @@ class Gendernaut_Renderer {
 		return $classes;
 	}
 
+	// TODO: Comentar.
+	public function term_color_class( $term_id, $taxonomy = 'gendernaut_tax' ) {
+		$idx = gendernaut()->get_term_index( $term_id, $taxonomy );
+
+		return $idx ? $this->build_class( "{$taxonomy}-color-{$idx}" ) : '';
+	}
+
 	/**
 	 * Construct all possible class names combining given base classes, subclasses and modifiers, and render them in a single string.
 	 *
@@ -585,6 +847,10 @@ class Gendernaut_Renderer {
 		$prev_section = $this->current_section;
 		$this->current_section = $section_name;
 
+		if ( empty( $prev_section ) && empty( $atts['id'] ) ) {
+			$atts['id'] = $this->namespace;
+		}
+
 		$tag = $this->filter_tag( $section_name, $tag );
 
 		if ( $tag ) {
@@ -612,7 +878,7 @@ class Gendernaut_Renderer {
 	 * @param     array     $atts            Html attribute `'name' => 'value'` pairs.
 	 */
 	private function section_start( $section_name, $tag, $atts ) {
-		$classes = $this->filter_classes( $section_name, $this->get_section_classes( $section_name ) );
+		$classes = $this->filter_classes( $section_name, $this->build_section_classes( $section_name ) );
 		$atts = $this->filter_atts( $section_name, $atts, $classes );
 
 		$atts = self::render_atts( $atts );
@@ -646,9 +912,11 @@ class Gendernaut_Renderer {
 	 * @param     string    $section_name
 	 * @return    string[]                   List of html classes.
 	 */
-	private function get_section_classes( $section_name ) {
-		$classes = $this->build_classes( $section_name, null, get_post_type() );
-		$classes[] = 'js-' . $this->build_class( $section_name );
+	private function build_section_classes( $section_name, $mods = array() ) {
+		$mods = array_merge( (array) $mods, (array) get_post_type() );
+		$classes = $this->build_classes( $section_name, null, $mods );
+		$classes[] = $this->build_js_class( $section_name );
+
 		return $classes;
 	}
 
@@ -815,5 +1083,13 @@ class Gendernaut_Renderer {
 		$template = locate_template( $templates );
 
 		return $template ? $template : self::default_template( $name );
+	}
+
+	// TODO: Comentar.
+	private function split_classes( $classes ) {
+		if ( is_string( $classes ) ) {
+			$classes = preg_split( '#\s+#', $classes );
+		}
+		return $classes;
 	}
 }

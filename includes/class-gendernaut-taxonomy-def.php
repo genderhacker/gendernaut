@@ -80,7 +80,8 @@ class Gendernaut_Taxonomy_Def {
 	 * Populate the instance with options to register a Taxonomy.
 	 *
 	 * @since    1.0.0
-	 * @param    string            $post_type     Post Type name.
+     * @param    string            $taxonomy      Taxonomy.
+	 * @param    string|string[]   $post_types    Post Type name.
 	 * @param    string            $sing_name     Singular Label.
 	 * @param    string            $plur_name     Plural Label.
 	 * @param    string            $textdomain    Textdomain for label translation.
@@ -109,24 +110,12 @@ class Gendernaut_Taxonomy_Def {
 		);
 
 		$defaults = array(
-			'public'             => true,
-			'query_var'          => true,
-			'capability_type'    => 'post',
-			'has_archive'        => true,
-			'hierarchical'       => false,
-			'menu_position'      => $menu_pos,
-			'supports'           => array( 'title', 'editor', 'thumbnail'),
-			'single'             => true,
-			'labels'             => array(),
-			'rewrite'            => is_string($rewrite) ? array( 'slug' => $rewrite ) : $rewrite,
-		);
-
-		$defaults = array(
+			'public'            => true,
 			'hierarchical'      => true,
-			'show_ui'           => true,
 			'show_admin_column' => true,
 			'query_var'         => true,
 			'labels'            => array(),
+			'rewrite'            => is_string($rewrite) ? array( 'slug' => $rewrite ) : $rewrite,
 		);
 
 		$args = wp_parse_args($args, $defaults);

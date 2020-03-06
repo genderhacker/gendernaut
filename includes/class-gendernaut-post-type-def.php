@@ -115,7 +115,7 @@ class Gendernaut_Post_Type_Def {
 			'capability_type'    => 'post',
 			'has_archive'        => true,
 			'hierarchical'       => false,
-			'menu_position'      => $menu_pos,
+			'menu_position'      => 6,
 			'supports'           => array( 'title', 'editor', 'thumbnail'),
 			'single'             => true,
 			'labels'             => array(),

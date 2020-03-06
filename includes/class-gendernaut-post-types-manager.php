@@ -62,9 +62,18 @@ class Gendernaut_Post_Types_Manager {
 	 *
 	 * @since    1.0.0
 	 * @access   private
-	 * @var      Gendernaut_Taxonomy_Def[]    $taxonomy_defs    Post Type Definitions to register.
+	 * @var      Gendernaut_Taxonomy_Def[]    $taxonomy_defs    Taxonomy Definitions to register.
 	 */
 	private $taxonomy_defs = array();
+
+	/**
+	 * Stores Taxonomy Field Definitions to register.
+	 *
+	 * @since    1.0.0
+	 * @access   private
+	 * @var      Gendernaut_Taxonomy_Field_Def[]    $taxonomy_field_defs    Taxonomy Field Definitions to register.
+	 */
+	private $taxonomy_field_defs = array();
 
 	/**
 	 * Initialize the class and set its properties.
@@ -83,6 +92,11 @@ class Gendernaut_Post_Types_Manager {
 		$this->load_dependencies();
 	}
 
+	// TODO: Comentar.
+	public function theme_setup() {
+		add_theme_support( 'post-thumbnails', array('gendernaut_archive', 'gendernaut_biblio') );
+	}
+
 	/**
 	 * Register Post Types.
 	 *
@@ -96,6 +110,7 @@ class Gendernaut_Post_Types_Manager {
 		 * Filter Post Type definitions before registering them.
 		 * @since    1.0.0
 		 * @param    Gendernaut_Post_Type_Def[]    List of Post Type Definitions.
+         * @var      Gendernaut_Post_Type_Def[]    $post_type_defs
 		 */
 		$post_type_defs = apply_filters('gendernaut_post_types', $this->post_type_defs);
 
@@ -103,14 +118,28 @@ class Gendernaut_Post_Types_Manager {
 		 * Filter Taxonomy definitions before registering them.
 		 * @since    1.0.0
 		 * @param    Gendernaut_Taxonomy_Def[]    List of Taxonomy Definitions.
+         * @var      Gendernaut_Taxonomy_Def[]    $taxonomy_defs
 		 */
 		$taxonomy_defs = apply_filters('gendernaut_taxonomies', $this->taxonomy_defs);
+
+		/**
+		 * Filter Taxonomy definitions before registering them.
+		 * @since    1.0.0
+		 * @param    Gendernaut_Taxonomy_Field_Def[]    List of Taxonomy Definitions.
+         * @var      Gendernaut_Taxonomy_Field_Def[]    $taxonomy_field_defs
+		 */
+		$taxonomy_field_defs = apply_filters('gendernaut_taxonomies_fields', $this->taxonomy_field_defs);
+
 
 		foreach ($post_type_defs as $def) {
 			$def->register();
 		}
 
 		foreach ($taxonomy_defs as $def) {
+			$def->register();
+		}
+
+		foreach ($taxonomy_field_defs as $def) {
 			$def->register();
 		}
 	}
@@ -134,7 +163,7 @@ class Gendernaut_Post_Types_Manager {
 	 *
 	 * @since 1.0.0
 	 * @param    string            $taxonomy     Taxonomy name.
-	 * @param    string[]          $post_types   List of Post Types to associate the Taxonomy with.
+	 * @param    string|string[]   $post_types   List of Post Types to associate the Taxonomy with.
 	 * @param    string            $sing_name    Singular Label.
 	 * @param    string            $plur_name    Plural Label.
 	 * @param    string|boolean    $rewrite      String to rewrite the url with. `true` uses $taxonomy, `false` disables rewrite. Default `true`.
@@ -142,6 +171,21 @@ class Gendernaut_Post_Types_Manager {
 	 */
 	public function add_taxonomy_def($taxonomy, $post_types, $sing_name, $plur_name, $rewrite = true, $args = null) {
 		$this->taxonomy_defs[] = new Gendernaut_Taxonomy_Def($taxonomy, $post_types, $sing_name, $plur_name, $this->textdomain, $rewrite, $args);
+	}
+
+	/**
+	 * Add a Taxonomy Field Definition to register.
+	 *
+	 * @since 1.0.0
+	 * @param    string            $taxonomy     Taxonomy name.
+     * @param    string            $field_key    Key of the field to use for the meta
+     * @param    string            $field_name   Public name of the field
+     * @param    string            $field_desc   Public description of the field
+	 * @param    boolean           $editable     Singular Label.
+	 * @param    boolean           $checkbox     Is the field a checkbox?
+	 */
+	public function add_taxonomy_field_def($taxonomy, $field_key, $field_name, $field_desc, $editable, $checkbox = false) {
+		$this->taxonomy_field_defs[] = new Gendernaut_Taxonomy_Field_Def($taxonomy, $field_key, $field_name, $field_desc, $editable, $checkbox, $this->textdomain);
 	}
 
 	/**
@@ -158,7 +202,7 @@ class Gendernaut_Post_Types_Manager {
 	 * Retrieve the array of Taxonomy Definitions.
 	 *
 	 * @since 1.0.0
-	 * @return    Gendernaut_Post_Type_Def[]    Array of Taxonomy Definitions.
+	 * @return    Gendernaut_Taxonomy_Def[]    Array of Taxonomy Definitions.
 	 */
 	public function get_taxonomoy_defs() {
 		return $this->taxonomy_defs;
@@ -179,12 +223,20 @@ class Gendernaut_Post_Types_Manager {
 		/**
 		 * The class for managing Post Type Definitions.
 		 */
+        /** @noinspection PhpIncludeInspection */
 		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-gendernaut-post-type-def.php';
 
 		/**
 		 * The class for managing Taxonomy Definitions.
 		 */
+        /** @noinspection PhpIncludeInspection */
 		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-gendernaut-taxonomy-def.php';
+
+		/**
+		 * The class for managing Taxonomy Field Definitions.
+		 */
+        /** @noinspection PhpIncludeInspection */
+		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-gendernaut-taxonomy-field-def.php';
 
 	}
 
@@ -197,24 +249,65 @@ class Gendernaut_Post_Types_Manager {
 	private function populate_post_type_defs() {
 		$create_post_type = gendernaut()->get_option('create_post_type', 'gendernaut_post_type');
 
-		if ( $create_post_type ) {
+		if ( $create_post_type === 'on' ) {
 			$post_type = 'gendernaut_archive';
-			$sing_name = __('Entry', $this->textdomain);
-			$plur_name = __('Entries', $this->textdomain);
-			$menu_name = __('Gendernaut Entries', $this->textdomain);
-			$rewrite = 'archive';
+
+			$sing_name = gendernaut()->get_option('post_type_singular', 'gendernaut_post_type' );
+
+			$plur_name = gendernaut()->get_option('post_type_plural', 'gendernaut_post_type' );
+
+			$menu_name = gendernaut()->get_option('post_type_menu', 'gendernaut_post_type' );
+
+			$rewrite = gendernaut()->get_option('archive_slug', 'gendernaut_post_type' );
 
 			$this->add_post_type_def($post_type, $sing_name, $plur_name, $rewrite, array(
 				'supports' => array( 'title', 'editor', 'thumbnail', 'excerpt', 'custom-fields'),
 				'labels' => array( 'menu_name' => $menu_name )
 			));
 
-			$taxonomy = 'gendernaut_tax';
-			$sing_name = __('Type', $this->textdomain);
-			$plur_name = __('Types', $this->textdomain);
-			$rewrite = 'type';
+			add_theme_support('post-thumbnails', ['gendernaut_archive']);
+
+			$create_tax = gendernaut()->get_option('create_taxonomy', 'gendernaut_post_type');
+
+			if ( $create_tax === 'on' ) {
+				$taxonomy = 'gendernaut_tax';
+
+				$sing_name = gendernaut()->get_option('taxonomy_singular', 'gendernaut_post_type' );
+
+				$plur_name = gendernaut()->get_option('taxonomy_plural', 'gendernaut_post_type' );
+
+				$rewrite = gendernaut()->get_option('taxonomy_slug', 'gendernaut_post_type' );
+
+				$this->add_taxonomy_def($taxonomy, $post_type, $sing_name, $plur_name, $rewrite);
+			}
+
+			$taxonomy = 'gendernaut_col';
+			$sing_name = __('Col·lecció', $this->textdomain);
+			$plur_name = __('Col·leccions', $this->textdomain);
+			$rewrite = 'collection';
 
 			$this->add_taxonomy_def($taxonomy, $post_type, $sing_name, $plur_name, $rewrite);
+
+			$this->add_taxonomy_field_def($taxonomy, 'g_col_code', __("Codi", $this->textdomain), __("Codi per poder editar la col·lecció", $this->textdomain), true, false);
+			$this->add_taxonomy_field_def($taxonomy, 'g_col_public', __("Pública", $this->textdomain), __("Indica si la col·lecció és pública", $this->textdomain), false, true);
 		}
+
+		$post_type = 'gendernaut_biblio';
+		$sing_name = __('Font', $this->textdomain);
+		$plur_name = __('Fonts', $this->textdomain);
+		$menu_name = __('Fonts', $this->textdomain);
+		$rewrite = 'fonts';
+
+		$this->add_post_type_def($post_type, $sing_name, $plur_name, $rewrite, array(
+			'supports' => array( 'title', 'editor', 'thumbnail', 'excerpt', 'custom-fields'),
+			'labels' => array( 'menu_name' => $menu_name )
+		));
+
+		$taxonomy = 'gendernaut_biblio_type';
+		$sing_name = __('Tipus de Font', $this->textdomain);
+		$plur_name = __('Tipus de Fonts', $this->textdomain);
+		$rewrite = 'type';
+
+		$this->add_taxonomy_def($taxonomy, $post_type, $sing_name, $plur_name, $rewrite);
 	}
 }

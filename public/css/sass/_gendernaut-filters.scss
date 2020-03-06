@@ -1,0 +1,219 @@
+
+#gendernaut {
+
+	.gendernaut-filters {
+		position: relative;
+		display: flex;
+		flex-wrap: wrap;
+		align-items: flex-start;
+		z-index: 100;
+		margin-bottom: 30px;
+	}
+
+	.gendernaut-filter-clear {
+		background-color: #a33;
+		color: #fff;
+		border-radius: 50%;
+		height: 20px;
+		width: 20px;
+		vertical-align: middle;
+		padding: 5px;
+		border: none;
+
+		&:hover {
+			background-color: #d00;
+		}
+
+		.gendernaut-icon {
+			display: block;
+			width: 100%;
+			height: 100%;
+		}
+	}
+
+	.gendernaut-filter-group {
+
+		// display: inline-block;
+		text-align: left;
+		padding: 0;
+		margin: 0 1rem 1rem 0;
+		position: relative;
+		border: none;
+
+		&__header {
+			display: flex;
+			align-items: center;
+			padding: 5px 10px;
+			border: 1px solid #000;
+		}
+			&__show {
+				flex-grow: 1;
+				line-height: 26px;
+				font-size: 20px;
+				text-align: left;
+
+				&::before {
+					content: "+";
+					display: inline-block;
+					width: 11px;
+					margin-right: 5px;
+					text-align: center;
+				}
+			}
+			&.open .gendernaut-filter-group__show {
+				&::before {
+					content: "-";
+				}
+			}
+
+			&__clear {
+				margin-left: 10px;
+
+				&:disabled {
+					visibility: hidden;
+				}
+			}
+		&__content {
+			position: relative;
+			z-index: 100;
+		}
+			&__terms {
+				list-style: none;
+				list-style-type: none;
+				margin: 0;
+				padding: 14px;
+				background-color: #fff;
+				border: 1px solid #000;
+				border-top-width: 0;
+			}
+				&__term {
+					margin: 0;
+					background: none;
+
+					input {
+						display: none;
+
+						&:checked + label {
+							padding-right: 10px;
+							border-right-width: 40px;
+
+							.gendernaut-icon--checkmark {
+								visibility: visible;
+							}
+						}
+					}
+
+					label {
+						padding: 5px;
+						padding-right: 30px;
+						margin: 0;
+						display: block;
+						width: 100%;
+						border-right: 20px solid transparent;
+
+
+						&:hover {
+							background-color: #eee;
+						}
+
+						.gendernaut-icon--checkmark {
+							visibility: hidden;
+							width: 20px;
+							height: 8px;
+						}
+					}
+
+					@for $i from 1 through length($tax-colors) {
+						&.gendernaut-gendernaut_tax-color-#{$i} label {
+							border-color: nth($tax-colors, $i);
+						}
+					}
+				}
+	}
+
+	.gendernaut-filter-index {
+		// flex-basis: 320px;
+		flex-grow: 1;
+
+		&__list {
+			list-style: none;
+			padding: 0;
+			margin: 0;
+			display: flex;
+			flex-wrap: wrap;
+			align-items: center;
+
+			&-item {
+				margin: 0 7px 7px 0;
+			}
+		}
+			&__option {
+				display: none;
+			}
+				&__option-label {
+					margin: 0;
+					text-align: center;
+					display: block;
+
+					&:not(.gendernaut-filter-clear) {
+						border: 1px solid currentColor;
+						padding: 0 5px;
+						font-size: 14px;
+						min-width: 26px;
+						line-height: 24px;
+					}
+				}
+
+				&__option:checked + .gendernaut-filter-index__option-label {
+					background-color: #000;
+					color: #fff;
+					border-color: #000;
+				}
+
+				&__option:disabled + .gendernaut-filter-index__option-label {
+					color: #888;
+				}
+
+				&__option--all:disabled + .gendernaut-filter-index__option-label {
+					visibility: hidden;
+				}
+	}
+
+	.gendernaut-filter-search {
+		flex-basis: 200px;
+		flex-grow: 1;
+		display: flex;
+		align-items: center;
+
+		&__field {
+			position: relative;
+		}
+			&__input {
+				padding: 10px 8px;
+				padding-right: 30px;
+				margin: 0;
+				font-size: 1rem;
+				line-height: 1;
+				width: 100%;
+				box-sizing: border-box;
+				border: 1px solid #000;
+				border-radius: 0;
+			}
+			&__icon {
+				position: absolute;
+				top: 0;
+				bottom: 0;
+				right: 6px;
+				width: 20px;
+			}
+
+		&__clear {
+			margin-left: 8px;
+			flex-shrink: 0;
+
+			&:disabled {
+				visibility: hidden;
+			}
+		}
+	}
+}

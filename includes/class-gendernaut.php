@@ -82,7 +82,7 @@ class Gendernaut {
 	 * @access   protected
 	 * @var      Gendernaut_Renderer    $renderer    Gendernaut_Renderer instance.
 	 */
-	protected $renderer;
+	public $renderer; // FIXME: no fer-ho públic, però mirar una forma d'accedir a les funcions del renderer des de les vistes sense haver de crear una funció aquí
 
 	/**
 	 * Holds instance that manages i18n.
@@ -100,6 +100,23 @@ class Gendernaut {
 	 * @var      Gendernaut_Post_Types_Manager    $post_types_manager    Gendernaut_Post_Types_Manager instance.
 	 */
 	protected $post_types_manager;
+
+	/**
+	 * Holds instance that manages collections definition.
+	 *
+	 * @since    1.0.0
+	 * @access   protected
+	 * @var      Gendernaut_Collection_Manager    $collection_manager    Gendernaut_Collection_Manager instance.
+	 */
+	protected $collection_manager;
+
+	/**
+	 * Holds instance that manages View types.
+	 * @since    1.0.0
+	 * @access   protected
+	 * @var      Gendernaut_Views    $views_manager    Gendernaut_Views instance.
+	 */
+	protected $views_manager;
 
 	/**
 	 * Create a unique instance of Gendernaut if it doesn't already exist.
@@ -171,6 +188,11 @@ class Gendernaut {
 		return $this->admin->get_option($option, $section, $default);
 	}
 
+	// TODO: documentar
+	public function get_post_type_option($option, $post_type, $default = '') {
+		return $this->admin->get_post_type_option($option, $post_type, $default);
+	}
+
 	/**
 	 * Check if a Post Type archive has to be overriden with Gendernaut Archive.
 	 *
@@ -180,6 +202,28 @@ class Gendernaut {
 	 */
 	public function uses_gendernaut($post_type) {
 		return $this->admin->uses_gendernaut($post_type);
+	}
+
+	/**
+	 * Get sort options for a Post Type.
+	 *
+	 * @since    1.0.0
+	 * @param     string    $post_type    Post Type slug
+	 * @return    array                   Array of sort options.
+	 */
+	public function get_sort_options($post_type) {
+		return $this->admin->get_sort_options($post_type);
+	}
+
+	/**
+	 * Whether the sort can be performed natively by WP_Query or not.
+	 *
+	 * @since    1.0.0
+	 * @param    string    $orderby    'orderby' string key.
+	 * @return   boolean               Whether the sort can be performed natively by WP_Query or not.
+	 */
+	public function is_native_order($orderby) {
+		return $this->admin->is_native_order($orderby);
 	}
 
 	/**
@@ -201,6 +245,17 @@ class Gendernaut {
 	}
 
 	/**
+	 * Render the menu.
+	 *
+	 * See {@see Gendernaut_Renderer::menu()}.
+	 *
+	 * @since    1.0.0
+	 * @see      Gendernaut_Renderer::menu()
+	 */
+	public function menu() {
+		$this->renderer->menu();
+	}
+	/**
 	 * Render the archive.
 	 *
 	 * See {@see Gendernaut_Renderer::archive()}.
@@ -210,6 +265,45 @@ class Gendernaut {
 	 */
 	public function archive() {
 		$this->renderer->archive();
+	}
+
+    /**
+     * Render the collections overlay.
+     *
+     * See {@see Gendernaut_Renderer::collections_overlay()}.
+     *
+     * @since    1.0.0
+     * @see      Gendernaut_Renderer::collections_overlay()
+     */
+    public function collections_overlay() {
+        $this->renderer->collections_overlay();
+    }
+
+    /**
+     * Render the collections menu.
+     *
+     * See {@see Gendernaut_Renderer::collections_menu()}.
+     *
+     * @since    1.0.0
+     * @see      Gendernaut_Renderer::collections_menu()
+     */
+    public function collections_menu() {
+        $this->renderer->collections_menu();
+    }
+
+	/**
+	 * Render a view selector.
+	 *
+	 * See {@see Gendernaut_Renderer::view_selector()}.
+	 *
+	 * @since    1.0.0
+	 * @see      Gendernaut_Renderer::view_selector()
+	 */
+	public function view_selector( $views = null ) {
+		if ( null === $views ) {
+			$views = $this->get_views();
+		}
+		$this->renderer->view_selector( $views );
 	}
 
 	/**
@@ -269,17 +363,17 @@ class Gendernaut {
 	/**
 	 * Get a list of html classes for an item.
 	 *
-	 * See {@see Gendernaut_Renderer::get_item_class()}.
+	 * See {@see Gendernaut_Renderer::get_item_classes()}.
 	 *
 	 * @since     1.0.0
 	 * @param     string|string[]    $additional    Additional classes to add to the attribute.
 	 * @param     array              $mods          Modifiers to append to main item class.
 	 * @param     int|null           $post_id       ID of the post the item is related to. Current `$post` by default.
 	 * @return    string[]                          List of html classes.
-	 * @see       Gendernaut_Renderer::get_item_class()
+	 * @see       Gendernaut_Renderer::get_item_classes()
 	 */
-	public function get_item_class( $additional = '', $mods = array(), $post_id = null ) {
-		return $this->renderer->get_item_class( $additional, $mods, $post_id );
+	public function get_item_classes( $additional = '', $mods = array(), $post_id = null ) {
+		return $this->renderer->get_item_classes( $additional, $mods, $post_id );
 	}
 
 	/**
@@ -304,6 +398,35 @@ class Gendernaut {
 	}
 
 	/**
+	 * Render the class attribute for the current section.
+	 *
+	 * See {@see Gendernaut_Renderer::section_class()}.
+	 *
+	 * @since    1.0.0
+	 * @param    string|string[]    $additional    Additional classes to add to the attribute.
+	 * @param    array              $mods          Modifiers to append to main section class.
+	 * @see      Gendernaut_Renderer::section_class()
+	 */
+	public function section_class( $additional = '', $mods = array() ) {
+		$this->renderer->section_class( $additional, $mods );
+	}
+
+	/**
+	 * Get a list of html classes for the current section.
+	 *
+	 * See {@see Gendernaut_Renderer::get_section_classes()}.
+	 *
+	 * @since     1.0.0
+	 * @param     string|string[]    $additional    Additional classes to add to the attribute.
+	 * @param     array              $mods          Modifiers to append to main section class.
+	 * @return    string[]                          List of html classes.
+	 * @see       Gendernaut_Renderer::get_section_classes()
+	 */
+	public function get_section_classes( $additional = '', $mods = array() ) {
+		return $this->renderer->get_section_classes( $additional, $mods );
+	}
+
+	/**
 	 * Get subclasses for the current section main class.
 	 *
 	 * See {@see Gendernaut_Renderer::subclass()}.
@@ -316,6 +439,11 @@ class Gendernaut {
 	 */
 	public function subclass( $subclass, $mods = array() ) {
 		return $this->renderer->subclass( $subclass, $mods );
+	}
+
+	// TODO: Comentar.
+	public function term_color_class( $term_id, $taxonomy = 'gendernaut_tax' ) {
+		return $this->renderer->term_color_class( $term_id, $taxonomy );
 	}
 
 	/**
@@ -341,13 +469,26 @@ class Gendernaut {
 	/**
 	 * Retrieve the list of views that have to be rendered.
 	 *
-	 * This is a placeholder function. Only the 'grid' view exists at the moment.
+	 * This is a placeholder function. All views are returned, but in the future they will be set through the admin.
 	 *
 	 * @since     1.0.0
 	 * @return    string[]    List of views to render.
 	 */
-	public function get_views() {
-		return array( 'grid' );
+	public function get_views($post_type = null) {
+		if ( empty($post_type) ) {
+			$post_type = get_post_type();
+		}
+		return $this->admin->get_views($post_type);
+	}
+
+	/**
+	 * Retrieve the list of all registered views.
+	 *
+	 * @since     1.0.0
+	 * @return    string[]    List of views.
+	 */
+	public function get_registered_views() {
+		return $this->views_manager->get_views();
 	}
 
 	/**
@@ -369,28 +510,37 @@ class Gendernaut {
 	/**
 	 * Get the filters to render.
 	 *
-	 * Gets which filters have to be rendered prom plugin options.
+	 * Gets which filters have to be rendered from plugin options.
 	 *
 	 * @since     1.0.0
 	 * @return    array[]    Each element in the returned list is a set of options for a filter.
 	 */
 	public function get_filters() {
 		$post_type = get_post_type();
-		$tax_keys = $this->admin->get_filters($post_type);
-		$filters = array();
+		return  $this->admin->get_filters($post_type);
+	}
 
-		if ( $tax_keys ) {
-			foreach ( $tax_keys as  $tax_key ) {
-				$taxonomy = get_taxonomy($tax_key);
-				$filters[] = array(
-					'type' => 'taxonomy',
-					'taxonomy' => $tax_key,
-					'label' => $taxonomy->labels->singular_name,
-				);
+	// TODO: Comentar.
+	public function get_term_index( $term_id, $tax ) {
+		static $maps = array();
+
+		if ( ! taxonomy_exists($tax) ) return false;
+
+		if ( ! isset( $maps[$tax] ) ) {
+			$maps[$tax] = array();
+
+			$terms = get_terms( array(
+				'taxonomy' => $tax,
+				'orderby'  => 'id',
+				'hide_empty' => true,
+			) );
+
+			foreach ($terms as $idx => $term) {
+				$maps[$tax][$term->term_id] = $idx + 1;
 			}
 		}
 
-		return $filters;
+		return $maps[$tax][$term_id];
 	}
 
 	/**
@@ -446,10 +596,20 @@ class Gendernaut {
 		 */
 		require_once $plugin_path . 'includes/class-gendernaut-i18n.php';
 
-		/**
-		 * The class that manages Post Types and Taxonomies.
+        /**
+         * The class that manages Post Types and Taxonomies.
+         */
+        require_once $plugin_path . 'includes/class-gendernaut-post-types-manager.php';
+
+        /**
+         * The class that manages Collections.
+         */
+        require_once $plugin_path . 'includes/class-gendernaut-collection-manager.php';
+
+        /**
+		 * The class that manages View types.
 		 */
-		require_once $plugin_path . 'includes/class-gendernaut-post-types-manager.php';
+		require_once $plugin_path . 'includes/class-gendernaut-views.php';
 
 		/**
 		 * The class responsible for defining all actions that occur in the admin area.
@@ -469,6 +629,7 @@ class Gendernaut {
 
 		$this->loader = new Gendernaut_Loader();
 
+		$this->views_manager = new Gendernaut_Views( $this->get_plugin_name(), $this->get_version() );
 	}
 
 	/**
@@ -498,9 +659,14 @@ class Gendernaut {
 	private function define_global_hooks() {
 
 		$this->post_types_manager = new Gendernaut_Post_Types_Manager( $this->get_plugin_name(), $this->get_version() );
+		$this->collection_manager = new Gendernaut_Collection_Manager($this->get_plugin_name(), $this->get_version() );
 
 		$this->loader->add_action( 'init', $this, 'global_setup' );
-		$this->loader->add_action( 'init', $this->post_types_manager, 'register_post_types' );
+		$this->loader->add_action( 'after_setup_theme', $this->post_types_manager, 'theme_setup' );
+		$this->loader->add_action( 'init', $this->post_types_manager, 'register_post_types', 15 );
+
+		$this->loader->add_action("wp_ajax_collection_save", $this->collection_manager, 'save_collection');
+		$this->loader->add_action("wp_ajax_nopriv_collection_save", $this->collection_manager, 'save_collection');
 	}
 
 	/**
@@ -516,9 +682,13 @@ class Gendernaut {
 
 		$this->loader->add_action( 'admin_enqueue_scripts', $this->admin, 'enqueue_styles' );
 		$this->loader->add_action( 'admin_enqueue_scripts', $this->admin, 'enqueue_scripts' );
+		$this->loader->add_action( 'init', $this->admin, 'init_settings', 10 );
+		$this->loader->add_action( 'init', $this->admin, 'add_post_type_settings', 99 );
 		$this->loader->add_action( 'admin_init', $this->admin, 'register_options' );
 		$this->loader->add_action( 'admin_menu', $this->admin, 'add_options_page' );
 
+		$this->loader->add_filter('manage_edit-gendernaut_col_columns', $this->collection_manager, 'collection_columns');
+		$this->loader->add_filter('manage_gendernaut_col_custom_column', $this->collection_manager, 'collection_column_content', 10, 3);
 	}
 
 	/**
@@ -537,7 +707,20 @@ class Gendernaut {
 		$this->loader->add_action( 'wp_enqueue_scripts', $this->public, 'enqueue_styles' );
 		$this->loader->add_action( 'wp_enqueue_scripts', $this->public, 'enqueue_scripts' );
 
+		$this->loader->add_action( 'pre_get_posts', $this->public, 'modify_main_query' );
 		$this->loader->add_filter('template_include', $this->public, 'filter_archive_template', 20);
+
+		$this->loader->add_filter('the_content', $this->public, 'show_archive_metadata', 0);
+		$this->loader->add_filter('the_content', $this->public, 'add_related_posts_after_post_content', 10);
+
+        $this->loader->add_filter('the_posts', $this->public, 'add_fake_collections_page', -10);
+		$this->loader->add_filter('the_posts', $this->public, 'reorder_posts', 10, 2);
+		$this->loader->add_filter('the_title', $this->public, 'filter_title', 10, 2);
+        $this->loader->add_filter('init', $this->public, 'add_edit_collection_rewrite');
+        $this->loader->add_filter('query_vars', $this->public, 'add_edit_collection_var');
+
+		$this->loader->add_action("wp_ajax_collection_load", $this->collection_manager, 'load_collection');
+		$this->loader->add_action("wp_ajax_nopriv_collection_load", $this->collection_manager, 'load_collection');
 	}
 
 	/**

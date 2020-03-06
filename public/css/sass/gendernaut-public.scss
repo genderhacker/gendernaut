@@ -1,69 +1,251 @@
-.gendernaut-grid-item {
-	display: inline-block;
-	margin: 0 10px 10px 0;
-	width: 220px;
+@import "vendor/featherlight";
 
-	&__thumb {
-		margin-bottom: 10px;
-		background-color: #555;
-
-		img {
-			display: block;
-			width: 100%;
-			margin: 0;
-		}
-	}
-
-	&__title {
-		margin: 0;
-		font-size: 12px;
-		font-weight: 500;
-		padding: 6px 0;
-		line-height: 16px;
-		text-transform: uppercase;
-		letter-spacing: 0.3em;
-		text-align: center;
-		color: #808080;
-	}
+.featherlight .featherlight-content {
+	max-width: 600px;
 }
 
-.gendernaut-filters {
-	padding-left: 2rem;
-	display: flex;
+.gendernaut-text-right {
+	text-align: right;
 }
 
-.gendernaut-filter-group {
-
-	// display: inline-block;
-	text-align: left;
-	margin-right: 2rem;
-	position: relative;
-
-	& &__header {
-		display: flex;
-	}
-
-	& &__title {
-		font-size: 1.3rem;
-		text-decoration: underline;
+.gendernaut-dropdown {
+	&__show {
+		border: 0;
+		padding: 0;
 		margin: 0;
-	}
-	& &__clear {
-		margin-left: 6px;
-		width: 2rem !important;
-		text-align: center;
+		text-transform: none;
+		color: inherit;
 		letter-spacing: 0;
-
-		&:disabled {
-			display: none !important;
-		}
+		font-weight: 400;
+		font-size: 1rem;
+		background: none;
 	}
-	& &__terms {
-		list-style: none;
-		list-style-type: none;
-		margin: 0;
+	&__content {
+		height: 0;
+		overflow: hidden;
 	}
-	& &__term {
-		margin: 0;
+	&.open &__content {
+		overflow: visible;
 	}
 }
+
+$tax-colors: #03bfc1, #ffff00, #8e018e, #fe0000, #fe8f01, #028d00, #400099, #135740, #2697f0, #bfb4f8, #26c30f, #bfca87, #93d6bf;
+
+@for $i from 1 through length($tax-colors) {
+	.gendernaut-gendernaut_tax-color-#{$i} {
+		background-color: nth($tax-colors, $i);
+
+		.gendernaut-term-list & {
+			background: none;
+			border-bottom: 5px solid nth($tax-colors, $i);
+		}
+	}
+}
+
+#gendernaut {
+
+	* {
+		box-sizing: border-box;
+	}
+
+	input {
+		vertical-align: middle;
+	}
+
+	.gendernaut-menu {
+		margin-bottom: 1.5rem;
+
+		&__item {
+			text-transform: uppercase;
+			margin-right: 20px;
+			display: inline-block;
+			font-weight: 400;
+
+			&.active, &:hover {
+				color: #000;
+			}
+		}
+	}
+
+	.gendernaut-icon {
+		line-height: 1em;
+		display: inline-block;
+		vertical-align: middle;
+
+		svg {
+			fill: currentColor;
+			width: 100%;
+			height: 100%;
+			display: block;
+		}
+	}
+
+	.gendernaut-tax-list {
+		margin: 0;
+	}
+	.gendernaut-tax {
+		&__label {
+			margin: 0;
+			margin-right: 5px;
+			display: inline;
+			font-weight: bold;
+
+			&::after {
+				content: ':';
+			}
+		}
+		&__content {
+			margin: 0;
+			display: inline;
+			font-style: normal;
+		}
+			&__terms {
+				list-style: none;
+				padding: 0;
+				margin: 0;
+				display: inline;
+			}
+				&__term {
+					display: inline;
+					margin: 0;
+					background: none;
+
+					@for $i from 1 through length($tax-colors) {
+						&.gendernaut-gendernaut_tax-color-#{$i} {
+							border-bottom: 5px solid nth($tax-colors, $i);
+						}
+					}
+
+					&:not(:last-child)::after {
+						content: ',';
+					}
+
+					&-link {
+						color: inherit;
+						text-decoration: underline;
+					}
+				}
+	}
+
+	.gendernaut-view-selector {
+		list-style: none;
+		padding: 0;
+		margin: 0;
+		margin-bottom: 1.5rem;
+
+		&__item {
+			display: inline-block;
+
+			&:not(:first-child) {
+				&::before {
+					content: "|";
+					padding: 0 5px;
+				}
+			}
+
+			&-link {
+				display: inline-block;
+				background-color: #888;
+				color: #fff;
+				padding: 6px;
+				border-radius: 50%;
+				line-height: 0;
+
+				&.current {
+					background-color: #000;
+				}
+			}
+
+			&-icon {
+				width: 26px;
+				height: 26px;
+			}
+		}
+	}
+
+	.gendernaut-grid-item, .gendernaut-timeline-item {
+		display: inline-block;
+		width: 220px;
+
+		&.hidden {
+			display: none;
+		}
+
+		&__thumb {
+			width: 220px;
+			height: 220px;
+			margin-bottom: 10px;
+			background-color: #555;
+
+			img {
+				display: block;
+				width: 100%;
+				margin: 0;
+			}
+		}
+
+		&__title {
+			margin: 0;
+			font-size: 12px;
+			font-weight: 500;
+			line-height: 16px;
+			text-transform: uppercase;
+			letter-spacing: 0.3em;
+			text-align: center;
+			color: #808080;
+		}
+	}
+
+	.gendernaut-view-grid {
+		&__items {
+			margin: {
+				left: -10px;
+				top: -10px;
+			}
+		}
+	}
+
+	.gendernaut-grid-item {
+		margin: 10px;
+
+		&__title {
+			padding: 6px 0;
+		}
+
+		&__types {
+			position: absolute;
+			top: 0;
+			left: calc(100% + 3px);
+		}
+
+			&__type {
+				width: 8px;
+				height: 20px;
+				margin-top: 4px;
+			}
+	}
+}
+
+.rpbt_shortcode {
+	margin-top: 2rem;
+
+	h3 {
+		font-size: inherit;
+		font-weight: normal;
+		font-family: unset;
+		margin-bottom: 0.5rem;
+	}
+
+	ul {
+		margin-top: 0;
+		list-style-type: none;
+		li {
+			margin-bottom: 0;
+		}
+	}
+}
+
+@import "gendernaut-filters";
+@import "gendernaut-timeline";
+@import "gendernaut-list";
+@import "gendernaut-collections";
