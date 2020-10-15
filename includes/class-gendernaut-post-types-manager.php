@@ -241,45 +241,63 @@ class Gendernaut_Post_Types_Manager {
 	}
 
 	/**
+	 * Create custom post type and taxonomy
+	 *
+	 * @since    1.0.0
+	 * @access   private
+	 * @param      string    $options_section  The section from where to get the options.
+	 * @param      string    $post_type        The post type name.
+	 * @param      string    $taxonomy         The taxonomy name.
+	 * @param      boolean   $post_thumbnails  Whether to add the post-thumbnails capability to the post type.
+	 */
+	private function create_custom_post_type_and_taxonomy($options_section, $post_type, $taxonomy, $post_thumbnails) {
+		$create_post_type = gendernaut()->get_option('create_post_type', $options_section);
+
+		if ( $create_post_type === 'on' ) {
+			$sing_name = gendernaut()->get_option( 'post_type_singular', $options_section );
+
+			$plur_name = gendernaut()->get_option( 'post_type_plural', $options_section );
+
+			$menu_name = gendernaut()->get_option( 'post_type_menu', $options_section );
+
+			$rewrite = gendernaut()->get_option( 'archive_slug', $options_section );
+
+			$this->add_post_type_def( $post_type, $sing_name, $plur_name, $rewrite, array(
+				'supports' => array( 'title', 'editor', 'thumbnail', 'excerpt', 'custom-fields' ),
+				'labels'   => array( 'menu_name' => $menu_name )
+			) );
+
+			if ($post_thumbnails) {
+				add_theme_support( 'post-thumbnails', [ 'gendernaut_archive' ] );
+			}
+
+			$create_tax = gendernaut()->get_option( 'create_taxonomy', $options_section );
+
+			if ( $create_tax === 'on' ) {
+				$sing_name = gendernaut()->get_option( 'taxonomy_singular', $options_section );
+
+				$plur_name = gendernaut()->get_option( 'taxonomy_plural', $options_section );
+
+				$rewrite = gendernaut()->get_option( 'taxonomy_slug', $options_section );
+
+				$this->add_taxonomy_def( $taxonomy, $post_type, $sing_name, $plur_name, $rewrite );
+			}
+		}
+	}
+
+	/**
 	 * Add self-defined Post Type Definitions if needed.
 	 *
 	 * @since    1.0.0
 	 * @access   private
 	 */
 	private function populate_post_type_defs() {
+		$this->create_custom_post_type_and_taxonomy('gendernaut_post_type', 'gendernaut_archive', 'gendernaut_tax', true);
+
 		$create_post_type = gendernaut()->get_option('create_post_type', 'gendernaut_post_type');
 
 		if ( $create_post_type === 'on' ) {
 			$post_type = 'gendernaut_archive';
-
-			$sing_name = gendernaut()->get_option('post_type_singular', 'gendernaut_post_type' );
-
-			$plur_name = gendernaut()->get_option('post_type_plural', 'gendernaut_post_type' );
-
-			$menu_name = gendernaut()->get_option('post_type_menu', 'gendernaut_post_type' );
-
-			$rewrite = gendernaut()->get_option('archive_slug', 'gendernaut_post_type' );
-
-			$this->add_post_type_def($post_type, $sing_name, $plur_name, $rewrite, array(
-				'supports' => array( 'title', 'editor', 'thumbnail', 'excerpt', 'custom-fields'),
-				'labels' => array( 'menu_name' => $menu_name )
-			));
-
-			add_theme_support('post-thumbnails', ['gendernaut_archive']);
-
-			$create_tax = gendernaut()->get_option('create_taxonomy', 'gendernaut_post_type');
-
-			if ( $create_tax === 'on' ) {
-				$taxonomy = 'gendernaut_tax';
-
-				$sing_name = gendernaut()->get_option('taxonomy_singular', 'gendernaut_post_type' );
-
-				$plur_name = gendernaut()->get_option('taxonomy_plural', 'gendernaut_post_type' );
-
-				$rewrite = gendernaut()->get_option('taxonomy_slug', 'gendernaut_post_type' );
-
-				$this->add_taxonomy_def($taxonomy, $post_type, $sing_name, $plur_name, $rewrite);
-			}
 
 			$taxonomy = 'gendernaut_col';
 			$sing_name = __('Col·lecció', $this->textdomain);
@@ -292,22 +310,6 @@ class Gendernaut_Post_Types_Manager {
 			$this->add_taxonomy_field_def($taxonomy, 'g_col_public', __("Pública", $this->textdomain), __("Indica si la col·lecció és pública", $this->textdomain), false, true);
 		}
 
-		$post_type = 'gendernaut_biblio';
-		$sing_name = __('Font', $this->textdomain);
-		$plur_name = __('Fonts', $this->textdomain);
-		$menu_name = __('Fonts', $this->textdomain);
-		$rewrite = 'fonts';
-
-		$this->add_post_type_def($post_type, $sing_name, $plur_name, $rewrite, array(
-			'supports' => array( 'title', 'editor', 'thumbnail', 'excerpt', 'custom-fields'),
-			'labels' => array( 'menu_name' => $menu_name )
-		));
-
-		$taxonomy = 'gendernaut_biblio_type';
-		$sing_name = __('Tipus de Font', $this->textdomain);
-		$plur_name = __('Tipus de Fonts', $this->textdomain);
-		$rewrite = 'type';
-
-		$this->add_taxonomy_def($taxonomy, $post_type, $sing_name, $plur_name, $rewrite);
+		$this->create_custom_post_type_and_taxonomy('gendernaut_sources_post_type', 'gendernaut_biblio', 'gendernaut_biblio_type', false);
 	}
 }

@@ -155,6 +155,29 @@ class Gendernaut_Public {
 	}
 
 	/**
+	 * Set the appropiate template for the custom post type based on the plugin settings.
+	 *
+	 * Hook to 'template_include' filter.
+	 *
+	 * @since     1.0.0
+	 * @param     string    $template    Template file to filter.
+	 * @return    string                 Template file to finally use.
+	 */
+	public function filter_post_template( $template ) {
+		if ( is_singular( 'gendernaut_archive' ) ) {
+			$template_option = gendernaut()->get_option('template', 'gendernaut_post_type');
+			if (! empty($template_option) && ($template_option !== 'default') && (file_exists($template_option))) {
+				return $template_option;
+			} else {
+				return $template;
+			}
+		} else {
+			return $template;
+		}
+
+	}
+
+	/**
 	 * Modify main query to sort by year
 	 *
 	 * Hook to 'pre_get_posts' action.
@@ -462,7 +485,7 @@ class Gendernaut_Public {
             define( 'FAKE_PAGE', true );
 
             $content = $this->collections_content();
-            $page = $this->make_fake_page("Collections", $content, 'collections');
+            $page = $this->make_fake_page("Collections", $content, -1, 'collections');
 	        $this->bypass_the_content_filters($page->ID);
             $posts[] = $page;
 
@@ -471,6 +494,8 @@ class Gendernaut_Public {
             unset( $wp_query->query[ 'error' ] );
             $wp_query->query_vars[ 'error' ] = '';
             $wp_query->is_404 = false;
+            $wp_query->is_page = true;
+	        $wp_query->is_single = false;
         }
 
         return $posts;

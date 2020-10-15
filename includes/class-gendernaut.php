@@ -205,6 +205,18 @@ class Gendernaut {
 	}
 
 	/**
+	 * Check if the Post Type has the timeline field set
+	 *
+	 * @since     1.0.0
+	 * @param     string    $post_type    Post Type string id.
+	 * @return    bool                    Whether the timeline field is set for this Post Type.
+	 */
+	public function has_gendernaut_timeline_field($post_type) {
+		$custom_field_timeline = gendernaut()->get_post_type_option( 'custom_field_timeline', $post_type );
+		return ! empty($custom_field_timeline);
+	}
+
+	/**
 	 * Get sort options for a Post Type.
 	 *
 	 * @since    1.0.0
@@ -469,8 +481,6 @@ class Gendernaut {
 	/**
 	 * Retrieve the list of views that have to be rendered.
 	 *
-	 * This is a placeholder function. All views are returned, but in the future they will be set through the admin.
-	 *
 	 * @since     1.0.0
 	 * @return    string[]    List of views to render.
 	 */
@@ -478,7 +488,11 @@ class Gendernaut {
 		if ( empty($post_type) ) {
 			$post_type = get_post_type();
 		}
-		return $this->admin->get_views($post_type);
+		$views = $this->admin->get_views($post_type);
+		if (! gendernaut()->has_gendernaut_timeline_field($post_type)) {
+			unset($views['timeline']);
+		}
+		return $views;
 	}
 
 	/**
@@ -682,7 +696,7 @@ class Gendernaut {
 
 		$this->loader->add_action( 'admin_enqueue_scripts', $this->admin, 'enqueue_styles' );
 		$this->loader->add_action( 'admin_enqueue_scripts', $this->admin, 'enqueue_scripts' );
-		$this->loader->add_action( 'init', $this->admin, 'init_settings', 10 );
+		$this->loader->add_action( 'init', $this->admin, 'init_settings', 98 );
 		$this->loader->add_action( 'init', $this->admin, 'add_post_type_settings', 99 );
 		$this->loader->add_action( 'admin_init', $this->admin, 'register_options' );
 		$this->loader->add_action( 'admin_menu', $this->admin, 'add_options_page' );
@@ -709,6 +723,7 @@ class Gendernaut {
 
 		$this->loader->add_action( 'pre_get_posts', $this->public, 'modify_main_query' );
 		$this->loader->add_filter('template_include', $this->public, 'filter_archive_template', 20);
+		$this->loader->add_filter('template_include', $this->public, 'filter_post_template', 20);
 
 		$this->loader->add_filter('the_content', $this->public, 'show_archive_metadata', 0);
 		$this->loader->add_filter('the_content', $this->public, 'add_related_posts_after_post_content', 10);

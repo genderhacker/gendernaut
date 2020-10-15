@@ -103,12 +103,26 @@ class Gendernaut_Renderer {
 	}
 
 	/**
-	 * Render the menu.
+	 * Render the menu if necessary.
 	 *
 	 * @since    1.0.0
 	 */
 	public function menu() {
-		$this->do_section( 'menu' );
+		global $wp;
+
+		// Is the plugin custom post type created?
+		$create_post_type = gendernaut()->get_option('create_post_type', 'gendernaut_post_type');
+
+		if ($create_post_type) {
+            // Is the plugin custom post archive archive page being shown
+            $is_post_type_archive_page = is_post_type_archive( 'gendernaut_archive') || is_tax( 'gendernaut_tax' );
+            $is_collections_page = home_url( $wp->request ) == site_url('collections') || is_tax( 'gendernaut_col' );
+            $is_fonts_page = is_post_type_archive( 'gendernaut_biblio') || is_tax( 'gendernaut_biblio_type' );
+
+            if ($is_post_type_archive_page || $is_collections_page || $is_fonts_page) {
+                $this->do_section( 'menu' );
+            }
+        }
 	}
 
     /**
@@ -569,7 +583,10 @@ class Gendernaut_Renderer {
 
 			foreach ( $terms as $term ) {
 				$id = $this->build_class("filter-term-{$term->term_taxonomy_id}");
-				$color_class = $this->term_color_class($term->term_id);
+				$color_class = '';
+				if ($options['taxonomy'] === 'gendernaut_tax') {
+					$color_class = $this->term_color_class($term->term_id);
+				}
 				$content .= "
 				<li class='{$item_class} {$color_class}'>
 					<input type='checkbox' id='{$id}' name='{$name}' value='{$term->term_id}' class='{$input_class}'>

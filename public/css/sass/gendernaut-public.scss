@@ -179,7 +179,9 @@ $tax-colors: #03bfc1, #ffff00, #8e018e, #fe0000, #fe8f01, #028d00, #400099, #135
 
 			img {
 				display: block;
+				object-fit: cover;
 				width: 100%;
+				height: 100%;
 				margin: 0;
 			}
 		}

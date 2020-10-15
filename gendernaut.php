@@ -15,7 +15,7 @@
  * @wordpress-plugin
  * Plugin Name:       Gendernaut
  * Plugin URI:        https://tallerestampa.com
- * Description:       This is a short description of what the plugin does. It's displayed in the WordPress admin area.
+ * Description:       Permet crear un arxiu de continguts i visualitzar-lo de 3 formes diferents: matriu, línia de temps i llistat.
  * Version:           1.0.0
  * Author:            Taller Estampa
  * Author URI:        https://tallerestampa.com

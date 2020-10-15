@@ -25,7 +25,10 @@
                 $sorted_terms = wp_list_sort($terms, 'term_id');
                 $post->category = end($sorted_terms); // Agafem l'últim i no el primer ja que els css van de menys a més i la classe última mana
 
-                $any = get_post_meta($post_id, "any", true);
+	            $post_type = get_post_type();
+	            $custom_field_timeline = gendernaut()->get_post_type_option('custom_field_timeline', $post_type );
+
+	            $any = get_post_meta($post_id, $custom_field_timeline, true);
                 if ($any < $min_any) { $min_any = $any; }
                 if ($any > $max_any) { $max_any = $any; }
 

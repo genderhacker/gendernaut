@@ -27,13 +27,17 @@ $terms = get_terms( array(
 </div>
 <ul>
 <?php
-	foreach ( $terms as $term ) {
-		?>
-		<h3><a href="<?php echo esc_attr(get_term_link($term->term_id, 'gendernaut_col')) ?>"><?php echo $term->name ?></a></h3>
-		<p><?php echo $term->description ?></p>
-		<?php
-//		print_r($term);
-	}
+    if (! empty($terms)) {
+        foreach ( $terms as $term ) {
+            ?>
+            <h3><a href="<?php echo esc_attr(get_term_link($term->term_id, 'gendernaut_col')) ?>"><?php echo $term->name ?></a></h3>
+            <p><?php echo $term->description ?></p>
+            <?php
+    //		print_r($term);
+        }
+    } else {
+	    echo __("No hi ha cap col·lecció", gendernaut()->get_plugin_name());
+    }
 ?>
 </ul>
 <?php

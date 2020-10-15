@@ -75,78 +75,152 @@ class Gendernaut_Admin {
 		$this->settings_manager = new WeDevs_Settings_API();
 	}
 
+	/**
+     * Return all the available "templates": both page templates and single-post_type.php
+     *
+	 * @return array
+	 */
+	protected function get_available_templates() {
+		$post_templates = wp_get_theme()->get_post_templates();
+		$templates_folder = wp_get_theme()->get_template_directory();
+		foreach($post_templates as $post_type => $templates) {
+			$post_type_object = get_post_type_object($post_type);
+
+			foreach($templates as $template_filename => $template_name){
+				$templates[$templates_folder . '/' . $template_filename] = "{$post_type_object->labels->singular_name}: {$template_name}";
+				unset($templates[$template_filename]);
+			}
+        }
+
+		$post_types = $this->post_type_labels();
+		foreach ($post_types as $post_type => $label) {
+			if (file_exists($templates_folder . "/single-" . $post_type . ".php")) {
+				$templates[$templates_folder . "/single-" . $post_type . ".php"] = "{$label}: " . __( 'Default', $this->textdomain );
+			}
+		}
+
+		$post_type_object = get_post_type_object("post");
+		$templates = array('default' => "{$post_type_object->labels->singular_name}: " . __( 'Default', $this->textdomain )) + $templates;
+
+		return $templates;
+    }
+
 	// TODO: Comentar.
-	public function init_settings() {
+	public function custom_post_type_settings($defaults, $template = false) {
+	    $settings = array(
+		    'create_post_type' => array(
+			    'name'  => 'create_post_type',
+			    'label' => __( 'Create Post Type', $this->textdomain ),
+			    'type'  => 'checkbox',
+		    ),
+		    'post_type_singular' => array(
+			    'name'  => 'post_type_singular',
+			    'label' => __( "Post Type Singular Name (Default: {$defaults['post_type_singular']})", $this->textdomain ),
+			    'type'  => 'text',
+			    'default' => __($defaults['post_type_singular'], $this->textdomain),
+			    'sanitize_callback' => 'trim',
+		    ),
+		    'post_type_plural' => array(
+			    'name'  => 'post_type_plural',
+			    'label' => __( "Post Type Plural Name (Default: {$defaults['post_type_plural']})", $this->textdomain ),
+			    'type'  => 'text',
+			    'default' => __($defaults['post_type_plural'], $this->textdomain),
+			    'sanitize_callback' => 'trim',
+		    ),
+		    'post_type_menu' => array(
+			    'name'  => 'post_type_menu',
+			    'label' => __( "Name in the Admin Menu (Default: {$defaults['post_type_menu']})", $this->textdomain ),
+			    'type'  => 'text',
+			    'default' => __($defaults['post_type_menu'], $this->textdomain),
+			    'sanitize_callback' => 'trim',
+		    ),
+		    'archive_slug' => array(
+			    'name'  => 'archive_slug',
+			    'label' => __( "Post Type Archive slug (Default: {$defaults['archive_slug']})", $this->textdomain ),
+			    'type'  => 'text',
+			    'default' => $defaults['archive_slug'],
+			    'sanitize_callback' => 'trim',
+		    ),
+		    'create_taxonomy' => array(
+			    'name'  => 'create_taxonomy',
+			    'label' => __( 'Create Custom Taxonomy', $this->textdomain ),
+			    'type'  => 'checkbox',
+		    ),
+		    'taxonomy_singular' => array(
+			    'name'  => 'taxonomy_singular',
+			    'label' => __( "Taxonomy Singular Name (Default: {$defaults['taxonomy_singular']})", $this->textdomain ),
+			    'type'  => 'text',
+			    'default' => __($defaults['taxonomy_singular'], $this->textdomain),
+			    'sanitize_callback' => 'trim',
+		    ),
+		    'taxonomy_plural' => array(
+			    'name'  => 'taxonomy_plural',
+			    'label' => __( "Taxonomy Plural Name (Default: {$defaults['taxonomy_plural']})", $this->textdomain ),
+			    'type'  => 'text',
+			    'default' => __($defaults['taxonomy_plural'], $this->textdomain),
+			    'sanitize_callback' => 'trim',
+		    ),
+		    'taxonomy_slug' => array(
+			    'name'  => 'taxonomy_slug',
+			    'label' => __( "Taxonomy Archive slug (Default: {$defaults['taxonomy_slug']})", $this->textdomain ),
+			    'type'  => 'text',
+			    'default' => $defaults['taxonomy_slug'],
+			    'sanitize_callback' => 'trim',
+		    ),
+	    );
+
+	    if ($template) {
+		    $templates = $this->get_available_templates();
+		    $settings['template'] = array(
+			    'name' => 'template',
+			    'label' => __('Template', $this->textdomain),
+			    'desc' => __('Select how the archive contents are shown. In case of problems select', $this->textdomain) . ' ' . $templates['default'],
+			    'type' => 'select',
+			    'options' => $templates
+		    );
+        }
+
+        return $settings;
+	}
+
+	// TODO: Comentar.
+    public function init_settings() {
 
 		$this->sections = array(
 			array(
 				'id'    => 'gendernaut_post_type',
 				'title' => __( 'Custom Post Type', $this->textdomain ),
 			),
+			array(
+				'id'    => 'gendernaut_sources_post_type',
+				'title' => __( 'Custom Sources Post Type', $this->textdomain ),
+			),
 		);
 
 		$this->settings = array(
-			'gendernaut_post_type' => array(
-				'create_post_type' => array(
-					'name'  => 'create_post_type',
-					'label' => __( 'Create Custom Post Type', $this->textdomain ),
-					'type'  => 'checkbox',
-				),
-				'post_type_singular' => array(
-					'name'  => 'post_type_singular',
-					'label' => __( 'Post Type Singular Name (Default: Entry)', $this->textdomain ),
-					'type'  => 'text',
-					'default' => __('Entry', $this->textdomain),
-					'sanitize_callback' => 'trim',
-				),
-				'post_type_plural' => array(
-					'name'  => 'post_type_plural',
-					'label' => __( 'Post Type Plural Name (Default: Entries)', $this->textdomain ),
-					'type'  => 'text',
-					'default' => __('Entries', $this->textdomain),
-					'sanitize_callback' => 'trim',
-				),
-				'post_type_menu' => array(
-					'name'  => 'post_type_menu',
-					'label' => __( 'Name in the Admin Menu (Default: Archive)', $this->textdomain ),
-					'type'  => 'text',
-					'default' => __('Archive', $this->textdomain),
-					'sanitize_callback' => 'trim',
-				),
-				'archive_slug' => array(
-					'name'  => 'archive_slug',
-					'label' => __( 'Post Type Archive slug (Default: archive)', $this->textdomain ),
-					'type'  => 'text',
-					'default' => 'archive',
-					'sanitize_callback' => 'trim',
-				),
-				'create_taxonomy' => array(
-					'name'  => 'create_taxonomy',
-					'label' => __( 'Create Custom Taxonomy', $this->textdomain ),
-					'type'  => 'checkbox',
-				),
-				'taxonomy_singular' => array(
-					'name'  => 'taxonomy_singular',
-					'label' => __( 'Taxonomy Singular Name (Default: Type)', $this->textdomain ),
-					'type'  => 'text',
-					'default' => __('Type', $this->textdomain),
-					'sanitize_callback' => 'trim',
-				),
-				'taxonomy_plural' => array(
-					'name'  => 'taxonomy_plural',
-					'label' => __( 'Taxonomy Plural Name (Default: Types)', $this->textdomain ),
-					'type'  => 'text',
-					'default' => __('Types', $this->textdomain),
-					'sanitize_callback' => 'trim',
-				),
-				'taxonomy_slug' => array(
-					'name'  => 'taxonomy_slug',
-					'label' => __( 'Taxonomy Archive slug (Default: type)', $this->textdomain ),
-					'type'  => 'text',
-					'default' => 'type',
-					'sanitize_callback' => 'trim',
-				),
-			)
+			'gendernaut_post_type' => $this->custom_post_type_settings(
+                array(
+                    'post_type_singular' => 'Entry',
+                    'post_type_plural' => 'Entries',
+                    'post_type_menu' => 'Archive',
+                    'archive_slug' => 'archive',
+                    'taxonomy_singular' => 'Type',
+                    'taxonomy_plural' => 'Types',
+                    'taxonomy_slug' => 'type',
+                ),
+                true
+            ),
+			'gendernaut_sources_post_type' => $this->custom_post_type_settings(
+				array(
+					'post_type_singular' => 'Source',
+					'post_type_plural' => 'Sources',
+					'post_type_menu' => 'Sources',
+					'archive_slug' => 'sources',
+					'taxonomy_singular' => 'Source Type',
+					'taxonomy_plural' => 'Source Types',
+					'taxonomy_slug' => 'source_type',
+				)
+            ),
 		);
 	}
 
@@ -173,6 +247,17 @@ class Gendernaut_Admin {
 
 		foreach ($post_types as $post_type => $label) {
 			$key = $this->get_post_type_section_key($post_type);
+            $post_type_archive_url = get_post_type_archive_link($post_type);
+
+            if (empty($post_type_archive_url)) {
+                continue;
+            }
+
+			$available_views = $views;
+            if (! gendernaut()->has_gendernaut_timeline_field($post_type)) {
+                unset($available_views['timeline']);
+            }
+
 			$taxonomies = $this->taxonomy_labels($post_type);
 			$sort_options = array_merge(
 				$this->get_simple_sort_options(),
@@ -186,14 +271,16 @@ class Gendernaut_Admin {
 			$this->settings[$key] = array(
 				'use_gendernaut' => array(
 					'name'  => 'use_gendernaut',
-					'label' => __( 'Use Gendernaut Archive', $this->textdomain ),
+                    'label' => __( 'Use Gendernaut Archive', $this->textdomain ),
+                    'desc' => __( 'If active you can view the entries at', $this->textdomain ) . ' ' . $post_type_archive_url,
 					'type'  => 'checkbox',
 				),
 				'views' => array(
 					'name'  => 'views',
 					'label' => __( 'Show Views:', $this->textdomain ),
 					'type'  => 'multicheck',
-					'options' => $views,
+                    'default' => array('grid' => 'grid'),
+					'options' => $available_views,
 				),
 				'filter_by' => array(
 					'name'  => 'filter_by',
@@ -236,6 +323,15 @@ class Gendernaut_Admin {
 					'sanitize_callback' => 'trim',
 				),
 			);
+
+			if ($post_type === 'gendernaut_archive') {
+                $this->settings[$key]['custom_field_timeline'] = array(
+	                'name'  => 'custom_field_timeline',
+	                'label' => __( 'Custom Field Name for timeline Year', $this->textdomain ),
+	                'desc' => __( 'If it is not defined the timeline view is not available', $this->textdomain ),
+	                'type'  => 'text',
+                );
+            }
 		}
 	}
 
