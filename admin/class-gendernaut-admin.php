@@ -81,6 +81,7 @@ class Gendernaut_Admin {
 	 * @return array
 	 */
 	protected function get_available_templates() {
+		$templates = array();
 		$post_templates = wp_get_theme()->get_post_templates();
 		$templates_folder = wp_get_theme()->get_template_directory();
 		foreach($post_templates as $post_type => $templates) {
